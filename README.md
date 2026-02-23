@@ -38,7 +38,6 @@ An [MCP](https://modelcontextprotocol.io/) server that lets AI assistants create
 - **Tables** — create, format, merge cells, auto-fit, alternating rows, cell shading
 - **Footnotes & endnotes** — add, delete, validate, customize numbering styles
 - **Multiple transports** — stdio (default), SSE, and streamable-http for remote deployment
-- **PyPI packaging** — install with `pip install word-mcp-live` or run with `uvx`
 
 ## Architecture
 
@@ -62,15 +61,12 @@ An [MCP](https://modelcontextprotocol.io/) server that lets AI assistants create
 
 ## Quick Start
 
-### Install from PyPI
+### Install
 
 ```bash
-# Run directly (no install needed)
-uvx --from word-mcp-live word_mcp_server
-
-# Or install globally
-pip install word-mcp-live
-word_mcp_server
+git clone https://github.com/ykarapazar/word-mcp-live.git
+cd word-mcp-live
+pip install -e .
 ```
 
 ### Claude Desktop
@@ -81,8 +77,8 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "word": {
-      "command": "uvx",
-      "args": ["--from", "word-mcp-live", "word_mcp_server"],
+      "command": "python",
+      "args": ["/absolute/path/to/word-mcp-live/word_mcp_server.py"],
       "env": {
         "MCP_AUTHOR": "Your Name",
         "MCP_AUTHOR_INITIALS": "YN"
@@ -100,8 +96,8 @@ Add to your `.mcp.json`:
 {
   "mcpServers": {
     "word": {
-      "command": "uvx",
-      "args": ["--from", "word-mcp-live", "word_mcp_server"],
+      "command": "python",
+      "args": ["/absolute/path/to/word-mcp-live/word_mcp_server.py"],
       "env": {
         "MCP_AUTHOR": "Your Name",
         "MCP_AUTHOR_INITIALS": "YN"
@@ -109,15 +105,6 @@ Add to your `.mcp.json`:
     }
   }
 }
-```
-
-### From Source
-
-```bash
-git clone https://github.com/ykarapazar/word-mcp-live.git
-cd word-mcp-live
-pip install -e .
-python word_mcp_server.py
 ```
 
 ## Configuration
@@ -400,12 +387,12 @@ This project builds on [GongRzhe/Office-Word-MCP-Server](https://github.com/Gong
 - **Layout diagnostics** — `word_live_diagnose_layout` and `word_live_get_paragraph_format`
 - **Multiple transports** — stdio, SSE, and streamable-http (for remote deployment)
 - **Configurable author** — `MCP_AUTHOR` environment variable for tracked changes and comments
-- **PyPI packaging** — `pip install word-mcp-live` / `uvx --from word-mcp-live word_mcp_server`
+- **Installable package** — `pip install -e .` from source with entry point `word_mcp_server`
 
 ## Requirements
 
 - **Python 3.11+**
-- `python-docx`, `fastmcp`, `msoffcrypto-tool` (installed automatically via pip)
+- `python-docx`, `fastmcp`, `msoffcrypto-tool` (installed automatically by `pip install -e .`)
 - **Windows Live tools only:** Windows 10/11 + Microsoft Word + `pywin32`
 
 > **Note:** The 78 cross-platform tools work without Word installed — only python-docx is needed.
