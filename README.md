@@ -1,52 +1,172 @@
+<div align="center">
+
 # word-mcp-live
 
-MCP server for Microsoft Word with live COM automation on Windows.
+**The MCP server that gives AI full control of Microsoft Word**
 
-![Platform: Windows + macOS/Linux](https://img.shields.io/badge/platform-Windows%20%2B%20macOS%2FLinux-blue)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
-![Tools: 105](https://img.shields.io/badge/tools-105-orange)
+`105 tools` &middot; `Dual-mode architecture` &middot; `Live COM editing` &middot; `Cross-platform`
 
-78 cross-platform tools (python-docx) work everywhere. 27 Windows-only live tools use COM automation to edit documents **while they're open in Word** — no file locking issues, real-time tracked changes, comments, layout control, and per-operation undo.
+[![PyPI version](https://img.shields.io/pypi/v/word-mcp-live?color=blue)](https://pypi.org/project/word-mcp-live/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Tools: 105](https://img.shields.io/badge/tools-105-orange)]()
+[![Platform: Windows + macOS/Linux](https://img.shields.io/badge/platform-Windows%20%2B%20macOS%2FLinux-lightgrey)]()
+[![PyPI Downloads](https://img.shields.io/pypi/dm/word-mcp-live)](https://pypi.org/project/word-mcp-live/)
+[![Smithery](https://smithery.ai/badge/word-mcp-live)](https://smithery.ai/server/word-mcp-live)
 
-## What's New vs the Original
+</div>
 
-This project builds on [GongRzhe/Office-Word-MCP-Server](https://github.com/GongRzhe/Office-Word-MCP-Server) (54 tools) and adds 48 new tools:
+---
 
-| Category | New Tools | What They Do |
-|----------|-----------|--------------|
-| Live editing (COM) | `word_live_insert_text`, `word_live_delete_text`, `word_live_format_text`, `word_live_add_table`, `word_live_undo` | Edit documents open in Word — no lock conflicts, per-operation undo |
-| Live reading (COM) | `word_live_get_text`, `word_live_get_page_text`, `word_live_get_info`, `word_live_find_text`, `word_live_get_undo_history` | Read from open documents (page-level text with char offsets, undo stack) |
-| Tracked changes | `track_replace`, `track_insert`, `track_delete`, `list_tracked_changes`, `accept_tracked_changes`, `reject_tracked_changes` | Full revision tracking via OOXML manipulation |
-| Live revisions (COM) | `word_live_list_revisions`, `word_live_accept_revisions`, `word_live_reject_revisions` | Manage tracked changes in open documents |
-| Comments | `add_comment`, `word_live_add_comment`, `word_live_get_comments` | Write and read comments (both file-based and COM) |
-| Hyperlinks | `manage_hyperlinks` | Add, list, remove, and update hyperlinks |
-| Layout (COM) | `word_live_set_page_layout`, `word_live_add_header_footer`, `word_live_add_page_numbers`, `word_live_add_section_break`, `word_live_set_paragraph_spacing`, `word_live_add_bookmark`, `word_live_add_watermark` | Full document layout control in open documents |
-| Layout (file-based) | `set_page_layout`, `add_header_footer`, `add_page_numbers`, `add_section_break`, `set_paragraph_spacing`, `add_bookmark`, `add_watermark` | Same layout tools for file-based editing |
-| Footnotes | 10 tools | Add, delete, validate, customize footnotes and endnotes |
-| Protection | `protect_document`, `unprotect_document`, `add_restricted_editing`, `add_digital_signature`, `verify_document` | Document protection and signatures |
-| Screen capture | `word_screen_capture` | Screenshot of the Word window |
+## What is word-mcp-live?
 
-### Configurable author name
+An [MCP](https://modelcontextprotocol.io/) server that lets AI assistants create, read, and edit Microsoft Word documents. 78 cross-platform tools work on any OS using python-docx, while 27 Windows-exclusive tools use COM automation to edit documents **while they're open in Word** — with real-time tracked changes, per-operation undo, and zero file-locking issues.
 
-All tools that write author metadata (tracked changes, comments) read from the `MCP_AUTHOR` environment variable. Set it in your MCP config to use your own name:
+|  | Cross-Platform Mode | Windows Live Mode |
+|---|---|---|
+| **Engine** | python-docx | COM automation (pywin32) |
+| **Tools** | 78 | 27 |
+| **Platform** | Windows, macOS, Linux | Windows only |
+| **File state** | Must be closed | Must be open in Word |
+| **Undo** | N/A (file-level saves) | Per-operation Ctrl+Z |
+| **Tracked changes** | OOXML manipulation | Native Word revisions |
+
+## Key Features
+
+- **Live editing** — insert, delete, format, find & replace in documents open in Word; no save-close-reopen cycle
+- **Per-operation undo** — every tool call is a single Ctrl+Z entry in Word's undo stack via `UndoRecord`
+- **Tracked changes** — both OOXML-based (cross-platform) and native COM revisions (Windows)
+- **Comments** — add and read comments anchored to specific text ranges
+- **Layout diagnostics** — detect keep_with_next chains, heading style misuse, PageBreakBefore problems
+- **Tables** — create, format, merge cells, auto-fit, alternating rows, cell shading
+- **Footnotes & endnotes** — add, delete, validate, customize numbering styles
+- **Multiple transports** — stdio (default), SSE, and streamable-http for remote deployment
+- **PyPI packaging** — install with `pip install word-mcp-live` or run with `uvx`
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                 FastMCP Server                   │
+│              (stdio / SSE / HTTP)                │
+├────────────────────┬────────────────────────────┤
+│  Cross-Platform    │     Windows Live            │
+│  (python-docx)     │     (COM / pywin32)         │
+│                    │                             │
+│  78 tools          │     27 tools                │
+│  File must be      │     File must be            │
+│  CLOSED            │     OPEN in Word            │
+│                    │                             │
+│  ✓ Any OS          │     ✓ Per-op undo           │
+│  ✓ File-based I/O  │     ✓ Native revisions      │
+│  ✓ OOXML direct    │     ✓ Real-time updates      │
+└────────────────────┴────────────────────────────┘
+```
+
+## Quick Start
+
+### Install from PyPI
+
+```bash
+# Run directly (no install needed)
+uvx --from word-mcp-live word_mcp_server
+
+# Or install globally
+pip install word-mcp-live
+word_mcp_server
+```
+
+### Claude Desktop
+
+Add to your `claude_desktop_config.json`:
 
 ```json
 {
-  "env": {
-    "MCP_AUTHOR": "Your Name",
-    "MCP_AUTHOR_INITIALS": "YN"
+  "mcpServers": {
+    "word": {
+      "command": "uvx",
+      "args": ["--from", "word-mcp-live", "word_mcp_server"],
+      "env": {
+        "MCP_AUTHOR": "Your Name",
+        "MCP_AUTHOR_INITIALS": "YN"
+      }
+    }
   }
 }
 ```
 
-## Tool List
+### Claude Code
 
-### Cross-Platform Tools (78)
+Add to your `.mcp.json`:
 
-These work on Windows, macOS, and Linux using python-docx.
+```json
+{
+  "mcpServers": {
+    "word": {
+      "command": "uvx",
+      "args": ["--from", "word-mcp-live", "word_mcp_server"],
+      "env": {
+        "MCP_AUTHOR": "Your Name",
+        "MCP_AUTHOR_INITIALS": "YN"
+      }
+    }
+  }
+}
+```
+
+### From Source
+
+```bash
+git clone https://github.com/ykarapazar/word-mcp-live.git
+cd word-mcp-live
+pip install -e .
+python word_mcp_server.py
+```
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MCP_AUTHOR` | `"AI Assistant"` | Author name for tracked changes and comments |
+| `MCP_AUTHOR_INITIALS` | `"AI"` | Author initials for comments |
+| `MCP_TRANSPORT` | `stdio` | Transport type: `stdio`, `sse`, or `streamable-http` |
+| `MCP_HOST` | `0.0.0.0` | Host to bind (for SSE/HTTP transports) |
+| `MCP_PORT` | `8000` | Port to bind (for SSE/HTTP transports) |
+| `FASTMCP_LOG_LEVEL` | `INFO` | Log level for FastMCP |
+
+For remote deployment (e.g., Render), see [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md).
+
+## Tool Reference
+
+### Summary
+
+| Category | Cross-Platform | Windows Live | Total |
+|----------|:-:|:-:|:-:|
+| Document Management | 7 | — | 7 |
+| Content | 14 | — | 14 |
+| Formatting | 17 | 3 | 20 |
+| Comments | 4 | 2 | 6 |
+| Tracked Changes | 6 | 3 | 9 |
+| Hyperlinks | 1 | — | 1 |
+| Layout | 7 | 7 | 14 |
+| Footnotes | 10 | — | 10 |
+| Protection | 5 | — | 5 |
+| Extraction | 4 | — | 4 |
+| Reading | — | 6 | 6 |
+| Editing | — | 5 | 5 |
+| Undo | — | 2 | 2 |
+| Screen Capture | — | 1 | 1 |
+| Diagnostics | — | 1 | 1 |
+| **Total** | **75** | **30** | **105** |
+
+### Cross-Platform Tools
+
+These work on Windows, macOS, and Linux using python-docx. The document file must be **closed** (not open in Word).
 
 <details>
-<summary>Document Management (7)</summary>
+<summary><b>Document Management (7)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -61,7 +181,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Content (14)</summary>
+<summary><b>Content (14)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -83,7 +203,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Formatting (19)</summary>
+<summary><b>Formatting (17)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -108,7 +228,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Comments (4)</summary>
+<summary><b>Comments (4)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -120,7 +240,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Tracked Changes (6)</summary>
+<summary><b>Tracked Changes (6)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -134,7 +254,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Hyperlinks (1)</summary>
+<summary><b>Hyperlinks (1)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -143,7 +263,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Layout (9)</summary>
+<summary><b>Layout (7)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -158,7 +278,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Footnotes (10)</summary>
+<summary><b>Footnotes (10)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -176,7 +296,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Protection (5)</summary>
+<summary><b>Protection (5)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -189,7 +309,7 @@ These work on Windows, macOS, and Linux using python-docx.
 </details>
 
 <details>
-<summary>Extraction (4)</summary>
+<summary><b>Extraction (4)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -200,96 +320,111 @@ These work on Windows, macOS, and Linux using python-docx.
 
 </details>
 
-### Windows Live Tools (27)
+### Windows Live Tools
 
-These require Windows with Microsoft Word installed. They operate on documents **currently open in Word** via COM automation — no file locking issues. All destructive tools are wrapped with `UndoRecord` — each tool call appears as a single Ctrl+Z entry in Word's undo stack.
+These require Windows with Microsoft Word installed. They operate on documents **currently open in Word** via COM automation. All destructive tools are wrapped with `UndoRecord` — each tool call appears as a single Ctrl+Z entry in Word's undo stack.
+
+<details open>
+<summary><b>Editing (8)</b></summary>
 
 | Tool | Description |
 |------|-------------|
-| **Screen Capture** | |
-| `word_screen_capture` | Screenshot of the Word window |
-| **Editing** | |
-| `word_live_insert_text` | Insert text (with optional tracked changes) |
-| `word_live_delete_text` | Delete text |
-| `word_live_format_text` | Format text (bold, italic, font, highlight, paragraph alignment) |
-| `word_live_add_table` | Add a table |
-| `word_live_apply_list` | Apply or remove bullet/numbered list formatting |
-| `word_live_setup_heading_numbering` | Apply multilevel list numbering to headings with optional style customization (font, size, color, spacing, alignment) |
-| `word_live_undo` | Undo last N operations (each tool call = one undo entry) |
-| **Reading** | |
+| `word_live_insert_text` | Insert text at a position (with optional tracked changes) |
+| `word_live_delete_text` | Delete a character range |
+| `word_live_replace_text` | Find & replace via COM — works across tracked change boundaries; supports wildcards |
+| `word_live_format_text` | Format text (bold, italic, font, highlight, paragraph alignment, page break before) |
+| `word_live_add_table` | Insert a table |
+| `word_live_format_table` | Format an existing table |
+| `word_live_apply_list` | Apply bullet, numbered, or multilevel list formatting |
+| `word_live_setup_heading_numbering` | Auto-numbered headings (1. / 1.1) with configurable style |
+
+</details>
+
+<details open>
+<summary><b>Reading (7)</b></summary>
+
+| Tool | Description |
+|------|-------------|
 | `word_live_get_text` | Get all text paragraph by paragraph |
 | `word_live_get_page_text` | Get text from specific page(s) with char offsets for chaining |
-| `word_live_get_paragraph_format` | Inspect paragraph formatting (font, spacing, list info) |
+| `word_live_get_paragraph_format` | Inspect paragraph formatting (font, spacing, alignment, list info, per-run detail) |
 | `word_live_get_info` | Get document metadata (pages, words, sections) |
-| `word_live_find_text` | Find text with context |
-| `word_live_get_undo_history` | List undo stack entries (shows MCP operation names) |
-| **Comments & Revisions** | |
+| `word_live_find_text` | Find text with context; supports wildcards (`^m`, `^t`, `^p`) |
+| `word_live_get_undo_history` | List undo stack entries |
+| `word_live_diagnose_layout` | Scan for layout problems (keep_with_next chains, style misuse, break issues) |
+
+</details>
+
+<details open>
+<summary><b>Comments & Revisions (5)</b></summary>
+
+| Tool | Description |
+|------|-------------|
 | `word_live_get_comments` | Get all comments |
-| `word_live_add_comment` | Add a comment |
+| `word_live_add_comment` | Add a comment anchored to text |
 | `word_live_list_revisions` | List tracked changes |
-| `word_live_accept_revisions` | Accept tracked changes |
-| `word_live_reject_revisions` | Reject tracked changes |
-| **Layout** | |
-| `word_live_set_page_layout` | Set orientation, size, margins |
-| `word_live_add_header_footer` | Add header/footer |
+| `word_live_accept_revisions` | Accept tracked changes (all or by author/type) |
+| `word_live_reject_revisions` | Reject tracked changes (all or by author/type) |
+
+</details>
+
+<details open>
+<summary><b>Layout (7)</b></summary>
+
+| Tool | Description |
+|------|-------------|
+| `word_live_set_page_layout` | Set orientation, size, and margins |
+| `word_live_add_header_footer` | Add header/footer text |
 | `word_live_add_page_numbers` | Add page numbers |
 | `word_live_add_section_break` | Add section break |
-| `word_live_set_paragraph_spacing` | Set paragraph spacing |
-| `word_live_add_bookmark` | Add a bookmark |
-| `word_live_add_watermark` | Add a watermark |
+| `word_live_set_paragraph_spacing` | Set paragraph spacing (line_spacing in **points**: 1.15× = 13.8pt) |
+| `word_live_add_bookmark` | Add a named bookmark |
+| `word_live_add_watermark` | Add a text watermark |
 
-## Quick Start
+</details>
 
-### Claude Code (`.mcp.json`)
+<details open>
+<summary><b>Undo & Screen Capture (2)</b></summary>
 
-```json
-{
-  "mcpServers": {
-    "word": {
-      "command": "python",
-      "args": ["path/to/word_mcp_server.py"],
-      "env": {
-        "MCP_AUTHOR": "Your Name",
-        "MCP_AUTHOR_INITIALS": "YN"
-      }
-    }
-  }
-}
-```
+| Tool | Description |
+|------|-------------|
+| `word_live_undo` | Undo last N operations (each tool call = one undo entry) |
+| `word_screen_capture` | Screenshot of the Word window |
 
-### Claude Desktop (`claude_desktop_config.json`)
+</details>
 
-```json
-{
-  "mcpServers": {
-    "word": {
-      "command": "uvx",
-      "args": ["--from", "word-mcp-live", "word_mcp_server"]
-    }
-  }
-}
-```
+## Compared to the Original
 
-### From source
+This project builds on [GongRzhe/Office-Word-MCP-Server](https://github.com/GongRzhe/Office-Word-MCP-Server) (54 tools) with the following additions:
 
-```bash
-git clone https://github.com/ykarapazar/word-mcp-live.git
-cd word-mcp-live
-pip install -r requirements.txt
-python word_mcp_server.py
-```
+- **27 Windows Live tools** — COM automation for editing documents open in Word
+- **21 new cross-platform tools** — tracked changes, comments, hyperlinks, layout, footnotes, protection
+- **Per-operation undo** — `UndoRecord` wrapping on all destructive live tools
+- **Layout diagnostics** — `word_live_diagnose_layout` and `word_live_get_paragraph_format`
+- **Multiple transports** — stdio, SSE, and streamable-http (for remote deployment)
+- **Configurable author** — `MCP_AUTHOR` environment variable for tracked changes and comments
+- **PyPI packaging** — `pip install word-mcp-live` / `uvx --from word-mcp-live word_mcp_server`
 
 ## Requirements
 
-- Python 3.11+
-- `python-docx`, `fastmcp`, `msoffcrypto-tool` (see `requirements.txt`)
+- **Python 3.11+**
+- `python-docx`, `fastmcp`, `msoffcrypto-tool` (installed automatically via pip)
 - **Windows Live tools only:** Windows 10/11 + Microsoft Word + `pywin32`
+
+> **Note:** The 78 cross-platform tools work without Word installed — only python-docx is needed.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and how to add new tools.
+
+Found a bug? [Open an issue](https://github.com/ykarapazar/word-mcp-live/issues/new?template=bug_report.md).
+Have an idea? [Request a feature](https://github.com/ykarapazar/word-mcp-live/issues/new?template=feature_request.md).
 
 ## Acknowledgments
 
-Built on top of [GongRzhe/Office-Word-MCP-Server](https://github.com/GongRzhe/Office-Word-MCP-Server) (MIT License).
+Built on top of [GongRzhe/Office-Word-MCP-Server](https://github.com/GongRzhe/Office-Word-MCP-Server) by GongRzhe (MIT License).
 
-Additional libraries: [python-docx](https://python-docx.readthedocs.io/), [FastMCP](https://github.com/modelcontextprotocol/python-sdk), [pywin32](https://github.com/mhammond/pywin32).
+Additional libraries: [python-docx](https://python-docx.readthedocs.io/) &middot; [FastMCP](https://github.com/modelcontextprotocol/python-sdk) &middot; [pywin32](https://github.com/mhammond/pywin32)
 
 ## License
 
