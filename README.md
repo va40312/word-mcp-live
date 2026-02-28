@@ -1,11 +1,14 @@
 <div align="center">
 
+[![Install in Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=word&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJ3b3JkLW1jcC1saXZlIl19)
+
 # word-mcp-live
 
-**The MCP server that gives AI full control of Microsoft Word**
+**The only MCP server that edits Word documents while they're open**
 
-`Live editing` &middot; `Tracked changes` &middot; `Per-action undo` &middot; `Cross-platform`
+`Live editing` &middot; `Tracked changes` &middot; `Per-action undo` &middot; `114 tools` &middot; `Cross-platform`
 
+[![PyPI](https://img.shields.io/pypi/v/word-mcp-live?color=blue)](https://pypi.org/project/word-mcp-live/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Platform: Windows + macOS/Linux](https://img.shields.io/badge/platform-Windows%20%2B%20macOS%2FLinux-lightgrey)]()
@@ -14,32 +17,202 @@
 
 ---
 
-## What Can It Do?
+word-mcp-live gives any AI assistant that supports [MCP](https://modelcontextprotocol.io/) full control of Microsoft Word. Open a document, tell the AI what you need, and watch it happen — formatting, tracked changes, comments, and all. Changes appear live in your open document.
 
-word-mcp-live lets any AI assistant that supports [MCP](https://modelcontextprotocol.io/) work with Microsoft Word like a human would. Open a document, tell the AI what you need, and watch it happen — formatting, tracked changes, comments, and all.
+<table>
+<tr>
+<td width="50%">
 
-Just tell the AI what you want in plain language:
+### Without word-mcp-live
 
+- AI can discuss your document but can't touch it
+- You copy-paste between AI and Word, losing formatting
+- Track changes? You do those manually after the fact
+- Every edit means save → close → process → reopen
+
+</td>
+<td width="50%">
+
+### With word-mcp-live
+
+- "Add a tracked change replacing ABC Corp with XYZ Ltd" — done
+- Changes appear live in your open Word document
+- Every AI edit is one Ctrl+Z away
+- Real tracked changes with your name, not XML hacks
+
+</td>
+</tr>
+</table>
+
+### See it in action
+
+https://github.com/user-attachments/assets/fbb09af4-1e25-4e49-94d0-45b363278810
+
+## What Sets This Apart
+
+- **Live editing** — Edit documents while they're open in Word. No save-close-reopen cycle.
+- **Full undo** — Every AI action is a single Ctrl+Z. Made a mistake? Just undo it.
+- **Native tracked changes** — Real Word revisions with your name, not XML hacks.
+- **Threaded comments** — Add, reply, resolve, and delete comments like a human reviewer.
+- **Layout diagnostics** — Detects formatting problems before they become print disasters.
+- **Equations & cross-references** — Insert math formulas and auto-updating references.
+- **114 tools** — The most comprehensive Word MCP server available.
+
+## Quick Start
+
+```bash
+pip install word-mcp-live
 ```
-"Draft a contract with tracked changes so my colleague can review"
-"Format all headings as Cambria 13pt bold and add automatic numbering"
-"Add a comment on paragraph 3 asking about the deadline"
-"Find every mention of 'ABC Corp' and replace with 'XYZ Ltd' as a tracked change"
-"Set the page to A4 landscape with 2cm margins"
-"Insert a table of contents based on the document headings"
-"Add page numbers in the footer and our company name in the header"
+
+Or install from source:
+
+```bash
+git clone https://github.com/ykarapazar/word-mcp-live.git
+cd word-mcp-live
+pip install -e .
 ```
 
-## Key Capabilities
+## Client Installation
 
-- **Edit documents while they're open** — no save-close-reopen cycle
-- **Track every change** — insertions, deletions, and replacements all appear as tracked changes your team can review
-- **Undo anything** — every AI action is a single Ctrl+Z in Word
-- **Add comments** — anchored to specific text, just like a human reviewer
-- **Format professionally** — fonts, styles, headings, automatic numbering, tables, watermarks
-- **Read any part** — extract text by page, search with context, get document structure
-- **Full layout control** — margins, orientation, headers, footers, page numbers, section breaks
-- **Works on any OS** — core features work on Windows, macOS, and Linux
+<details open>
+<summary><b>Claude Desktop</b></summary>
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "word": {
+      "command": "uvx",
+      "args": ["word-mcp-live"],
+      "env": {
+        "MCP_AUTHOR": "Your Name",
+        "MCP_AUTHOR_INITIALS": "YN"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Claude Code</b></summary>
+
+Add to your `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "word": {
+      "command": "uvx",
+      "args": ["word-mcp-live"],
+      "env": {
+        "MCP_AUTHOR": "Your Name",
+        "MCP_AUTHOR_INITIALS": "YN"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b></summary>
+
+**One-click:** Click the install button at the top of this page.
+
+**Manual:** Add to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "word": {
+      "command": "uvx",
+      "args": ["word-mcp-live"],
+      "env": {
+        "MCP_AUTHOR": "Your Name",
+        "MCP_AUTHOR_INITIALS": "YN"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>VS Code / Copilot</b></summary>
+
+**One-click:** [Install in VS Code](vscode:mcp/install?%7B%22name%22%3A%20%22word%22%2C%20%22command%22%3A%20%22uvx%22%2C%20%22args%22%3A%20%5B%22word-mcp-live%22%5D%7D)
+
+**Manual:** Add to your VS Code `settings.json`:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "word": {
+        "command": "uvx",
+        "args": ["word-mcp-live"],
+        "env": {
+          "MCP_AUTHOR": "Your Name",
+          "MCP_AUTHOR_INITIALS": "YN"
+        }
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Windsurf</b></summary>
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "word": {
+      "command": "uvx",
+      "args": ["word-mcp-live"],
+      "env": {
+        "MCP_AUTHOR": "Your Name",
+        "MCP_AUTHOR_INITIALS": "YN"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Docker</b></summary>
+
+```json
+{
+  "mcpServers": {
+    "word": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "ghcr.io/ykarapazar/word-mcp-live"],
+      "env": {
+        "MCP_AUTHOR": "Your Name",
+        "MCP_AUTHOR_INITIALS": "YN"
+      }
+    }
+  }
+}
+```
+
+> Note: Docker mode supports cross-platform tools only. Live editing requires a native Windows install.
+
+</details>
+
+> **`MCP_AUTHOR`** sets your name on tracked changes and comments (default: `"Author"`). **`MCP_AUTHOR_INITIALS`** sets comment initials.
 
 ## Two Modes
 
@@ -52,89 +225,46 @@ Just tell the AI what you want in plain language:
 
 Both modes work together. The AI picks the right one for the task.
 
-## Getting Started
-
-### Install
-
-```bash
-git clone https://github.com/ykarapazar/word-mcp-live.git
-cd word-mcp-live
-pip install -e .
-```
-
-### Claude Desktop
-
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "word": {
-      "command": "python",
-      "args": ["/absolute/path/to/word-mcp-live/word_mcp_server.py"],
-      "env": {
-        "MCP_AUTHOR": "Your Name",
-        "MCP_AUTHOR_INITIALS": "YN"
-      }
-    }
-  }
-}
-```
-
-### Claude Code
-
-Add to your `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "word": {
-      "command": "python",
-      "args": ["/absolute/path/to/word-mcp-live/word_mcp_server.py"],
-      "env": {
-        "MCP_AUTHOR": "Your Name",
-        "MCP_AUTHOR_INITIALS": "YN"
-      }
-    }
-  }
-}
-```
-
-> **About `MCP_AUTHOR`:** Set this to your name so that tracked changes and comments show your name instead of "AI Assistant". `MCP_AUTHOR_INITIALS` sets the initials shown on comments.
-
-### Configuration
+## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MCP_AUTHOR` | `"AI Assistant"` | Author name for tracked changes and comments |
-| `MCP_AUTHOR_INITIALS` | `"AI"` | Author initials for comments |
+| `MCP_AUTHOR` | `"Author"` | Author name for tracked changes and comments |
+| `MCP_AUTHOR_INITIALS` | `""` | Author initials for comments |
 | `MCP_TRANSPORT` | `stdio` | Transport type: `stdio`, `sse`, or `streamable-http` |
 | `MCP_HOST` | `0.0.0.0` | Host to bind (for SSE/HTTP transports) |
 | `MCP_PORT` | `8000` | Port to bind (for SSE/HTTP transports) |
 
 For remote deployment, see [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md).
 
+## Example Prompts
+
+Just tell the AI what you want in plain language:
+
+```
+"Draft a contract with tracked changes so my colleague can review"
+"Format all headings as Cambria 13pt bold and add automatic numbering"
+"Add a comment on paragraph 3 asking about the deadline"
+"Find every mention of 'ABC Corp' and replace with 'XYZ Ltd' as a tracked change"
+"Set the page to A4 landscape with 2cm margins"
+"Insert a table of contents based on the document headings"
+"Add page numbers in the footer and our company name in the header"
+"Insert a cross-reference to Heading 2 in paragraph 5"
+```
+
 ## Tool Reference
 
-See the [complete tool reference](TOOLS.md) for all capabilities, organized by category.
+**114 tools** across two modes — see the [complete tool reference](TOOLS.md) for details.
 
-## Compared to the Original
-
-This project builds on [GongRzhe/Office-Word-MCP-Server](https://github.com/GongRzhe/Office-Word-MCP-Server) with significant additions:
-
-- **Windows Live editing** — COM automation for editing documents open in Word
-- **Per-operation undo** — every tool call is a single Ctrl+Z entry in Word's undo stack
-- **Tracked changes** — both OOXML-based (cross-platform) and native Word revisions (Windows)
-- **Comments** — add and read comments anchored to specific text
-- **Layout diagnostics** — detect formatting problems like keep_with_next chains and heading misuse
-- **New cross-platform tools** — hyperlinks, footnotes, endnotes, protection, digital signatures
-- **Multiple transports** — stdio, SSE, and streamable-http for remote deployment
-- **Configurable author** — `MCP_AUTHOR` for tracked changes and comments
+| Category | Count |
+|----------|-------|
+| Cross-platform (python-docx) | 75 |
+| Windows Live (COM automation) | 39 |
 
 ## Requirements
 
 - **Python 3.11+**
-- `python-docx`, `fastmcp`, `msoffcrypto-tool` (installed automatically by `pip install -e .`)
+- `python-docx`, `fastmcp`, `msoffcrypto-tool` (installed automatically)
 - **Windows Live tools only:** Windows 10/11 + Microsoft Word + `pywin32`
 
 > The cross-platform tools work without Word installed — only python-docx is needed.
@@ -155,5 +285,15 @@ Additional libraries: [python-docx](https://python-docx.readthedocs.io/) &middot
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+## Star History
+
+<a href="https://star-history.com/#ykarapazar/word-mcp-live&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ykarapazar/word-mcp-live&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ykarapazar/word-mcp-live&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ykarapazar/word-mcp-live&type=Date" />
+ </picture>
+</a>
 
 <!-- mcp-name: io.github.ykarapazar/word-mcp-live -->

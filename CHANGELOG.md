@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-02-28
+
+### Added
+- `word_live_modify_table` — table operations via COM: get info, set cell, add/delete rows/columns, merge cells, autofit, delete table
+- `word_live_save` — save document in place or save-as (docx, pdf, rtf, txt)
+- `word_live_toggle_track_changes` — toggle or explicitly set track changes mode on/off
+- `word_live_insert_image` — insert image with sizing, alignment, wrapping, and optional border
+- `word_live_insert_cross_reference` — insert live cross-references to headings, bookmarks, figures, tables, equations, footnotes, endnotes
+- `word_live_list_cross_reference_items` — list available cross-reference targets with their indices
+- `word_live_insert_equation` — insert mathematical equations using UnicodeMath syntax
+- `word_live_reply_to_comment` — threaded comment replies (Word 2016+)
+- `word_live_resolve_comment` — mark comments as resolved/unresolved (Word 2016+)
+- `word_live_delete_comment` — permanently delete a comment
+- Total tool count now **114** (75 cross-platform + 39 Windows Live)
+
+### Changed
+- `word_live_delete_text` — now table-aware: deletes table objects within range before text deletion
+- `word_live_insert_text` — auto-chunks text >30K chars to avoid COM 32K limit
+- `word_live_setup_heading_numbering` — handles inflated paragraph ranges from comment anchors
+- `word_live_modify_table` set_cell operation now accepts tracked changes before writing to prevent layered content
+
 ## [1.2.0] - 2025-02-15
 
 ### Added
@@ -50,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Document management, content editing, formatting, tables, extraction
 - FastMCP server with stdio transport
 
+[1.3.0]: https://github.com/ykarapazar/word-mcp-live/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/ykarapazar/word-mcp-live/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ykarapazar/word-mcp-live/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ykarapazar/word-mcp-live/releases/tag/v1.0.0

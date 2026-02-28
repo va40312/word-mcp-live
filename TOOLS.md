@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete list of all tools provided by word-mcp-live.
+Complete list of all 114 tools provided by word-mcp-live.
 
 ---
 
@@ -182,6 +182,12 @@ These require Windows with Microsoft Word installed. They operate on documents *
 | `word_live_format_table` | Format an existing table |
 | `word_live_apply_list` | Apply bullet, numbered, or multilevel list formatting |
 | `word_live_setup_heading_numbering` | Auto-numbered headings (1. / 1.1) with configurable style |
+| `word_live_modify_table` | Modify table structure: get info, set cell, add/delete rows/columns, merge cells, autofit, or delete table |
+| `word_live_save` | Save document in place or save-as to a new path (docx, pdf, rtf, txt) |
+| `word_live_toggle_track_changes` | Toggle or explicitly set track changes mode on/off |
+| `word_live_insert_image` | Insert an image with sizing, alignment, wrapping, and optional border |
+| `word_live_insert_cross_reference` | Insert a live cross-reference to headings, bookmarks, figures, tables, equations, footnotes, or endnotes |
+| `word_live_insert_equation` | Insert a mathematical equation using UnicodeMath syntax |
 
 </details>
 
@@ -196,6 +202,7 @@ These require Windows with Microsoft Word installed. They operate on documents *
 | `word_live_get_info` | Get document metadata (pages, words, sections) |
 | `word_live_find_text` | Find text with context; supports wildcards |
 | `word_live_get_undo_history` | List undo stack entries |
+| `word_live_list_cross_reference_items` | List available cross-reference targets (headings, bookmarks, figures, tables) with indices |
 | `word_live_diagnose_layout` | Scan for layout problems (keep_with_next chains, style misuse, break issues) |
 
 </details>
@@ -208,6 +215,9 @@ These require Windows with Microsoft Word installed. They operate on documents *
 | `word_live_get_comments` | Get all comments |
 | `word_live_add_comment` | Add a comment anchored to text |
 | `word_live_list_revisions` | List tracked changes |
+| `word_live_reply_to_comment` | Add a threaded reply to an existing comment (Word 2016+) |
+| `word_live_resolve_comment` | Mark a comment as resolved or unresolve it (Word 2016+) |
+| `word_live_delete_comment` | Permanently delete a comment from the document |
 | `word_live_accept_revisions` | Accept tracked changes (all or by author/type) |
 | `word_live_reject_revisions` | Reject tracked changes (all or by author/type) |
 
