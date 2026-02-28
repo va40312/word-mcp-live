@@ -974,13 +974,14 @@ def register_tools():
         end_row: int = None,
         end_col: int = None,
         autofit_mode: str = "content",
+        accept_revisions: bool = False,
         track_changes: bool = False,
     ):
         return live_tools.word_live_modify_table(
             filename, table_index, operation, row, col, text,
             before_row, before_col, header, cells,
             start_row, start_col, end_row, end_col,
-            autofit_mode, track_changes,
+            autofit_mode, accept_revisions, track_changes,
         )
 
     @mcp.tool(
@@ -1017,13 +1018,15 @@ def register_tools():
         remove: bool = False,
         continue_previous: bool = False,
         number_format: dict = None,
+        number_style: dict = None,
         start_at: dict = None,
+        level_map: dict = None,
         track_changes: bool = False,
     ):
         return live_tools.word_live_apply_list(
             filename, start_paragraph, end_paragraph, list_type,
             level, remove, continue_previous, number_format,
-            start_at, track_changes,
+            number_style, start_at, level_map, track_changes,
         )
 
     @mcp.tool(

@@ -32,10 +32,15 @@ def get_info(table):
     return {"rows": rows, "cols": cols, "data": data}
 
 
-def set_cell(table, row, col, text):
-    """Set cell text at (row, col)."""
+def set_cell(table, row, col, text, accept_revisions=False):
+    """Set cell text at (row, col). accept_revisions=True clears tracked changes first."""
     _validate_cell(table, row, col)
-    table.Cell(row, col).Range.Text = text
+    cell = table.Cell(row, col)
+    if accept_revisions:
+        revs = cell.Range.Revisions
+        if revs.Count > 0:
+            revs.AcceptAll()
+    cell.Range.Text = text
     return {"row": row, "col": col, "text": text}
 
 
@@ -145,6 +150,14 @@ def autofit(table, mode="content"):
         raise ValueError(f"Unknown autofit mode '{mode}'. Use: content, window, fixed")
     table.AutoFitBehavior(val)
     return {"autofit": mode}
+
+
+def delete_table(table):
+    """Delete the entire table object from the document."""
+    rows = table.Rows.Count
+    cols = table.Columns.Count
+    table.Delete()
+    return {"deleted": True, "had_rows": rows, "had_cols": cols}
 
 
 def _validate_cell(table, row, col):

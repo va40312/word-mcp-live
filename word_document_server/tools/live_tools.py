@@ -13,6 +13,10 @@ from word_document_server.defaults import DEFAULT_AUTHOR
 # Word COM constants
 WD_STORY = 6
 
+# Word COM InsertBefore/InsertAfter limit (~32K chars).
+# We use 30000 as safe margin below 2^15-1 = 32767.
+_INSERT_CHUNK_SIZE = 30000
+
 
 async def word_live_insert_text(
     filename: str = None,
@@ -23,9 +27,11 @@ async def word_live_insert_text(
 ) -> str:
     """Insert text into an open Word document.
 
+    Automatically chunks large text (>30K chars) to avoid Word COM limits.
+
     Args:
         filename: Document name or path (None = active document).
-        text: Text to insert.
+        text: Text to insert (no length limit — auto-chunked if needed).
         position: "start", "end", "cursor", or character offset as string.
         bookmark: Insert after a named bookmark (overrides position).
         track_changes: Track the insertion as a revision.
@@ -54,21 +60,31 @@ async def word_live_insert_text(
                 app.UserName = DEFAULT_AUTHOR
 
             try:
+                chunks = [text[i:i + _INSERT_CHUNK_SIZE]
+                          for i in range(0, max(len(text), 1), _INSERT_CHUNK_SIZE)]
+
                 if bookmark:
                     if not doc.Bookmarks.Exists(bookmark):
                         return json.dumps({"error": f"Bookmark '{bookmark}' not found"})
-                    doc.Bookmarks(bookmark).Range.InsertAfter(text)
+                    rng = doc.Bookmarks(bookmark).Range
+                    for chunk in chunks:
+                        rng.InsertAfter(chunk)
+                        rng.Collapse(0)  # wdCollapseEnd
                 elif position == "start":
-                    doc.Range(0, 0).InsertBefore(text)
+                    # InsertBefore: reverse order so first chunk ends up first
+                    for chunk in reversed(chunks):
+                        doc.Range(0, 0).InsertBefore(chunk)
                 elif position == "end":
-                    end_pos = doc.Content.End - 1
-                    doc.Range(end_pos, end_pos).InsertAfter(text)
+                    for chunk in chunks:
+                        end_pos = doc.Content.End - 1
+                        rng = doc.Range(end_pos, end_pos)
+                        rng.InsertAfter(chunk)
                 elif position == "cursor":
-                    app.Selection.TypeText(text)
+                    for chunk in chunks:
+                        app.Selection.TypeText(chunk)
                 else:
                     try:
                         offset = int(position)
-                        doc.Range(offset, offset).InsertBefore(text)
                     except ValueError:
                         return json.dumps(
                             {
@@ -76,20 +92,24 @@ async def word_live_insert_text(
                                 "Use 'start', 'end', 'cursor', or a character offset."
                             }
                         )
+                    # InsertBefore at offset: reverse order so first chunk ends up at offset
+                    for chunk in reversed(chunks):
+                        doc.Range(offset, offset).InsertBefore(chunk)
             finally:
                 if track_changes:
                     doc.TrackRevisions = prev_tracking
                     app.UserName = prev_author
 
-        return json.dumps(
-            {
-                "success": True,
-                "document": doc.Name,
-                "text_length": len(text),
-                "position": position,
-                "tracked": track_changes,
-            }
-        )
+        result = {
+            "success": True,
+            "document": doc.Name,
+            "text_length": len(text),
+            "position": position,
+            "tracked": track_changes,
+        }
+        if len(chunks) > 1:
+            result["chunks_used"] = len(chunks)
+        return json.dumps(result)
 
     except Exception as e:
         return json.dumps({"error": str(e)})
@@ -289,7 +309,9 @@ async def word_live_apply_list(
     remove: bool = False,
     continue_previous: bool = False,
     number_format: dict = None,
+    number_style: dict = None,
     start_at: dict = None,
+    level_map: dict = None,
     track_changes: bool = False,
 ) -> str:
     """[Windows only] Apply or remove bullet/numbered/multilevel list formatting on paragraphs.
@@ -300,15 +322,26 @@ async def word_live_apply_list(
         end_paragraph: Last paragraph to format (1-indexed, defaults to start_paragraph).
         list_type: "bullet", "number", or "multilevel" (outline numbered).
         level: Indentation level (0 = first level, 1 = second level, etc.).
-            For multilevel, this sets the list level per paragraph.
+            For multilevel, this sets the default list level for all paragraphs.
+            Use level_map instead for per-paragraph level control.
         remove: If True, removes list formatting from the range.
         continue_previous: If True, continues numbering from a previous list above.
         number_format: (multilevel only) Dict mapping level (int) to format string.
-            Example: {1: "%1.", 2: "%1.%2."} → "5.", "5.1."
+            Example: {1: "4.%1.", 2: "(%2)", 3: "(%3)"} → "4.1.", "(a)", "(i)"
             Keys are 1-indexed levels. If not provided, defaults to {1: "%1.", 2: "%1.%2."}.
+        number_style: (multilevel only) Dict mapping level (int) to numbering style string.
+            Styles: "arabic" (1,2,3), "lowercase_letter" (a,b,c), "uppercase_letter" (A,B,C),
+            "lowercase_roman" (i,ii,iii), "uppercase_roman" (I,II,III).
+            Example: {1: "arabic", 2: "lowercase_letter", 3: "lowercase_roman"}
+            If a string is given instead of dict, applies same style to all levels.
+            Default: "arabic" for all levels.
         start_at: (multilevel only) Dict mapping level (int) to starting number.
             Example: {1: 5} → numbering starts at 5.
             If not provided, starts at 1.
+        level_map: (multilevel only) Dict mapping paragraph index (int) to list level (int, 1-indexed).
+            Example: {29: 2, 30: 2, 37: 3} → para 29 at level 2, para 37 at level 3.
+            Paragraphs not in the map stay at level 1 (or the value of `level + 1`).
+            Applied AFTER the list template, so the template covers the full range.
         track_changes: Track changes as revisions.
 
     Returns:
@@ -355,10 +388,23 @@ async def word_live_apply_list(
                     # Normalize dict keys to int (JSON sends string keys)
                     nf = {int(k): v for k, v in (number_format or {1: "%1.", 2: "%1.%2."}).items()}
                     sa = {int(k): v for k, v in (start_at or {}).items()}
+                    lm = {int(k): int(v) for k, v in (level_map or {}).items()}
+                    # Map number_style string to wdListNumberStyle constant
+                    style_map = {
+                        "arabic": 0, "lowercase_letter": 4, "uppercase_letter": 3,
+                        "lowercase_roman": 2, "uppercase_roman": 1,
+                    }
+                    # number_style can be a string (same for all) or dict (per-level)
+                    if isinstance(number_style, dict):
+                        ns_map = {int(k): style_map.get(v, 0) for k, v in number_style.items()}
+                    elif isinstance(number_style, str):
+                        ns_map = {lvl: style_map.get(number_style, 0) for lvl in nf}
+                    else:
+                        ns_map = {}
                     for lvl_num, fmt_str in nf.items():
                         lv = lt.ListLevels(int(lvl_num))
                         lv.NumberFormat = fmt_str
-                        lv.NumberStyle = 0  # wdListNumberStyleArabic
+                        lv.NumberStyle = ns_map.get(int(lvl_num), 0)
                         lv.StartAt = sa.get(int(lvl_num), 1)
                         lv.Alignment = 0  # left
                         lv.NumberPosition = 0
@@ -366,17 +412,25 @@ async def word_live_apply_list(
                         lv.TabPosition = 28
                         # Do NOT set LinkedStyle — avoids Heading style side effects
 
+                    # Apply template to the full range at once (not per-paragraph)
+                    rng = doc.Range(
+                        doc.Paragraphs(start_paragraph).Range.Start,
+                        doc.Paragraphs(end_paragraph).Range.End,
+                    )
+                    rng.ListFormat.ApplyListTemplateWithLevel(
+                        ListTemplate=lt,
+                        ContinuePreviousList=continue_previous,
+                        ApplyTo=2,  # wdListApplyToSelection
+                        DefaultListBehavior=0,
+                    )
+                    formatted = end_paragraph - start_paragraph + 1
+
+                    # Set per-paragraph levels from level_map
+                    default_lvl = level + 1 if level > 0 else 1
                     for i in range(start_paragraph, end_paragraph + 1):
-                        para = doc.Paragraphs(i)
-                        should_continue = (i > start_paragraph) or continue_previous
-                        para.Range.ListFormat.ApplyListTemplateWithLevel(
-                            ListTemplate=lt,
-                            ContinuePreviousList=should_continue,
-                            DefaultListBehavior=1,
-                        )
-                        if level > 0:
-                            para.Range.ListFormat.ListLevelNumber = level + 1
-                        formatted += 1
+                        target_lvl = lm.get(i, default_lvl)
+                        if target_lvl != 1:
+                            doc.Paragraphs(i).Range.ListFormat.ListLevelNumber = target_lvl
                 else:
                     # bullet or number (original logic)
                     gallery_map = {"bullet": 1, "number": 2}
@@ -725,6 +779,24 @@ async def word_live_replace_text(
 
     if not find_text:
         return json.dumps({"error": "find_text is required"})
+
+    if len(find_text) > 255:
+        return json.dumps({
+            "error": f"find_text is {len(find_text)} chars (Word limit: 255). "
+            "Break into smaller find/replace pairs."
+        })
+    if len(replace_text) > 255:
+        return json.dumps({
+            "error": f"replace_text is {len(replace_text)} chars (Word limit: 255). "
+            "Break into smaller find/replace pairs."
+        })
+
+    if replace_all and track_changes:
+        return json.dumps({
+            "error": "replace_all=True with track_changes=True causes an infinite loop "
+            "(tracked deletions stay visible to Find, triggering endless re-replacement). "
+            "Use replace_all=False — each unique text only needs one replacement."
+        })
 
     try:
         from word_document_server.core.word_com import get_word_app, find_document, undo_record
@@ -1106,7 +1178,16 @@ async def word_live_delete_text(
                 app.UserName = DEFAULT_AUTHOR
 
             try:
-                rng.Delete()
+                # Delete any table objects within the range first
+                # (rng.Delete only removes text, leaving ghost table structure)
+                for i in range(doc.Tables.Count, 0, -1):
+                    tbl = doc.Tables(i)
+                    if tbl.Range.Start >= start and tbl.Range.End <= end:
+                        tbl.Delete()
+                # Delete remaining text in the range
+                rng = doc.Range(start, min(end, doc.Content.End))
+                if rng.Start < rng.End:
+                    rng.Delete()
             finally:
                 if track_changes:
                     doc.TrackRevisions = prev_tracking
@@ -1146,19 +1227,20 @@ async def word_live_modify_table(
     end_row: int = None,
     end_col: int = None,
     autofit_mode: str = "content",
+    accept_revisions: bool = False,
     track_changes: bool = False,
 ) -> str:
     """[Windows only] Modify a table in an open Word document.
 
     Operations: get_info, set_cell, add_column, delete_column,
-    add_row, delete_row, merge_cells, autofit.
+    add_row, delete_row, merge_cells, autofit, delete_table.
     All row/col indices are 1-based (Word COM standard).
 
     Args:
         filename: Document name or path (None = active document).
         table_index: 1-based table index (default 1).
         operation: One of: get_info, set_cell, add_column, delete_column,
-            add_row, delete_row, merge_cells, autofit.
+            add_row, delete_row, merge_cells, autofit, delete_table.
         row: Row index for set_cell, delete_row.
         col: Column index for set_cell, delete_column.
         text: Text for set_cell.
@@ -1171,6 +1253,8 @@ async def word_live_modify_table(
         end_row: End row for merge_cells.
         end_col: End column for merge_cells.
         autofit_mode: 'content', 'window', or 'fixed' (autofit operation).
+        accept_revisions: For set_cell — accept tracked changes in the cell before writing
+            (prevents layered text from old revisions persisting underneath new content).
         track_changes: Track modifications as revisions.
 
     Returns:
@@ -1214,7 +1298,7 @@ async def word_live_modify_table(
                 if op == "set_cell":
                     if row is None or col is None or text is None:
                         return json.dumps({"error": "set_cell requires row, col, and text"})
-                    result = table_com.set_cell(table, row, col, text)
+                    result = table_com.set_cell(table, row, col, text, accept_revisions=accept_revisions)
 
                 elif op == "add_column":
                     result = table_com.add_column(table, before_col, header, cells)
@@ -1240,10 +1324,13 @@ async def word_live_modify_table(
                 elif op == "autofit":
                     result = table_com.autofit(table, autofit_mode)
 
+                elif op == "delete_table":
+                    result = table_com.delete_table(table)
+
                 else:
                     return json.dumps({
                         "error": f"Unknown operation '{op}'. Use: get_info, set_cell, "
-                        "add_column, delete_column, add_row, delete_row, merge_cells, autofit"
+                        "add_column, delete_column, add_row, delete_row, merge_cells, autofit, delete_table"
                     })
             finally:
                 if track_changes:

@@ -155,3 +155,5 @@ Additional libraries: [python-docx](https://python-docx.readthedocs.io/) &middot
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+<!-- mcp-name: io.github.ykarapazar/word-mcp-live -->
