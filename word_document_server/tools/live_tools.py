@@ -125,6 +125,7 @@ async def word_live_format_text(
     bold: bool = None,
     italic: bool = None,
     underline: bool = None,
+    strikethrough: bool = None,
     font_name: str = None,
     font_size: float = None,
     font_color: str = None,
@@ -151,6 +152,7 @@ async def word_live_format_text(
         bold: Set bold (True/False).
         italic: Set italic (True/False).
         underline: Set underline (True/False).
+        strikethrough: Set strikethrough (True/False).
         font_name: Font family (e.g., "Arial", "Times New Roman").
         font_size: Font size in points (e.g., 12).
         font_color: Text color as "#RRGGBB" hex (e.g., "#FF0000" for red).
@@ -222,6 +224,7 @@ async def word_live_format_text(
                             "font_size": pr.Font.Size if pr.Font.Size and pr.Font.Size != 9999999 else None,
                             "bold": pr.Font.Bold if pr.Font.Bold != 9999999 else None,
                             "italic": pr.Font.Italic if pr.Font.Italic != 9999999 else None,
+                            "strikethrough": pr.Font.StrikeThrough if pr.Font.StrikeThrough != 9999999 else None,
                             "alignment": pf.Alignment,
                             "space_before": pf.SpaceBefore,
                             "space_after": pf.SpaceAfter,
@@ -235,6 +238,8 @@ async def word_live_format_text(
                     rng.Font.Italic = italic
                 if underline is not None:
                     rng.Font.Underline = 1 if underline else 0
+                if strikethrough is not None:
+                    rng.Font.StrikeThrough = strikethrough
                 if font_name is not None:
                     rng.Font.Name = font_name
                 if font_size is not None:
@@ -261,6 +266,8 @@ async def word_live_format_text(
                                 pr.Font.Bold = sf["bold"]
                             if sf["italic"] is not None:
                                 pr.Font.Italic = sf["italic"]
+                            if sf["strikethrough"] is not None:
+                                pr.Font.StrikeThrough = sf["strikethrough"]
                             pf.Alignment = sf["alignment"]
                             pf.SpaceBefore = sf["space_before"]
                             pf.SpaceAfter = sf["space_after"]

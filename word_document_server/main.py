@@ -864,6 +864,7 @@ def register_tools():
         bold: bool = None,
         italic: bool = None,
         underline: bool = None,
+        strikethrough: bool = None,
         font_name: str = None,
         font_size: float = None,
         font_color: str = None,
@@ -876,7 +877,7 @@ def register_tools():
     ):
         return live_tools.word_live_format_text(
             filename, start, end, start_paragraph, end_paragraph,
-            bold, italic, underline,
+            bold, italic, underline, strikethrough,
             font_name, font_size, font_color, highlight_color,
             style_name, paragraph_alignment, page_break_before,
             preserve_direct_formatting, track_changes,
