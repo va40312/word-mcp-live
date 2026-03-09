@@ -252,6 +252,70 @@ Just tell the AI what you want in plain language:
 "Insert a cross-reference to Heading 2 in paragraph 5"
 ```
 
+## Usage Examples
+
+### Example 1: Read a document (cross-platform)
+
+**Tool call:** `get_document_text`
+```json
+{ "filename": "C:/Documents/report.docx" }
+```
+**Expected output:**
+```json
+{
+  "status": "success",
+  "paragraphs": [
+    {"index": 0, "text": "Quarterly Report", "style": "Heading 1"},
+    {"index": 1, "text": "Revenue increased by 15% compared to Q3.", "style": "Normal"},
+    {"index": 2, "text": "Key Metrics", "style": "Heading 2"}
+  ],
+  "total_paragraphs": 3
+}
+```
+
+### Example 2: Live editing with tracked changes (Windows)
+
+**Tool call:** `word_live_replace_text`
+```json
+{
+  "filename": "report.docx",
+  "find_text": "ABC Corporation",
+  "replace_text": "XYZ Ltd",
+  "match_case": true,
+  "replace_all": true,
+  "track_changes": true
+}
+```
+**Expected output:**
+```json
+{
+  "status": "success",
+  "replacements": 4,
+  "message": "Replaced 4 occurrences (tracked changes enabled)"
+}
+```
+The replacements appear as tracked changes in Word with strikethrough on "ABC Corporation" and underline on "XYZ Ltd".
+
+### Example 3: Add a comment anchored to text (cross-platform)
+
+**Tool call:** `add_comment`
+```json
+{
+  "filename": "C:/Documents/contract.docx",
+  "target_text": "payment within 30 days",
+  "comment_text": "Should we extend this to 45 days?",
+  "author": "Jane Smith"
+}
+```
+**Expected output:**
+```json
+{
+  "status": "success",
+  "message": "Comment added by Jane Smith on 'payment within 30 days'"
+}
+```
+The comment appears in Word's Review panel, anchored to the specified text.
+
 ## Tool Reference
 
 **114 tools** across two modes — see the [complete tool reference](TOOLS.md) for details.
@@ -281,6 +345,16 @@ Have an idea? [Request a feature](https://github.com/ykarapazar/word-mcp-live/is
 Built on top of [GongRzhe/Office-Word-MCP-Server](https://github.com/GongRzhe/Office-Word-MCP-Server) by GongRzhe (MIT License).
 
 Additional libraries: [python-docx](https://python-docx.readthedocs.io/) &middot; [FastMCP](https://github.com/modelcontextprotocol/python-sdk) &middot; [pywin32](https://github.com/mhammond/pywin32)
+
+## Privacy
+
+This server runs entirely on your local machine. No data is collected, transmitted, or stored. See the full [Privacy Policy](PRIVACY.md).
+
+## Support
+
+- **Bug reports:** [Open an issue](https://github.com/ykarapazar/word-mcp-live/issues/new?template=bug_report.md)
+- **Feature requests:** [Request a feature](https://github.com/ykarapazar/word-mcp-live/issues/new?template=feature_request.md)
+- **Discussions:** [GitHub Discussions](https://github.com/ykarapazar/word-mcp-live/discussions)
 
 ## License
 
