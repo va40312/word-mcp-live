@@ -322,8 +322,11 @@ async def word_live_set_paragraph_spacing(
     space_after_pt: float = None,
     line_spacing: float = None,
     line_spacing_rule: str = None,
+    keep_with_next: bool = None,
+    keep_together: bool = None,
+    alignment: str = None,
 ) -> str:
-    """Set paragraph spacing in an open Word document.
+    """Set paragraph spacing and layout properties in an open Word document.
 
     Args:
         filename: Document name or path (None = active document).
@@ -338,6 +341,9 @@ async def word_live_set_paragraph_spacing(
             2.0 lines = 24pt. Formula: desired_lines * 12 = points_value.
         line_spacing_rule: "single"(0), "1.5_lines"(1), "double"(2),
                            "at_least"(3), "exactly"(4), "multiple"(5).
+        keep_with_next: Keep paragraph with next paragraph on same page (True/False).
+        keep_together: Keep all lines of paragraph on same page (True/False).
+        alignment: Paragraph alignment - "left"(0), "center"(1), "right"(2), "justify"(3).
 
     Returns:
         JSON with count of affected paragraphs.
@@ -387,6 +393,14 @@ async def word_live_set_paragraph_spacing(
                     pf.LineSpacingRule = rule_map[line_spacing_rule]
                 if line_spacing is not None:
                     pf.LineSpacing = line_spacing
+                if keep_with_next is not None:
+                    pf.KeepWithNext = keep_with_next
+                if keep_together is not None:
+                    pf.KeepTogether = keep_together
+                if alignment is not None:
+                    align_map = {"left": 0, "center": 1, "right": 2, "justify": 3}
+                    if alignment in align_map:
+                        pf.Alignment = align_map[alignment]
                 count += 1
 
         return json.dumps({

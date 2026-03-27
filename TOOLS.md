@@ -1,6 +1,6 @@
 # Tool Reference
 
-Complete list of all 114 tools provided by word-mcp-live.
+Complete list of all 115 tools provided by word-mcp-live.
 
 ---
 
@@ -196,6 +196,7 @@ These require Windows with Microsoft Word installed. They operate on documents *
 
 | Tool | Description |
 |------|-------------|
+| `word_live_list_open` | List all documents currently open in Word with name, path, pages, and saved status |
 | `word_live_get_text` | Get all text paragraph by paragraph |
 | `word_live_get_page_text` | Get text from specific page(s) with char offsets for chaining |
 | `word_live_get_paragraph_format` | Inspect paragraph formatting (font, spacing, alignment, list info, per-run detail) |

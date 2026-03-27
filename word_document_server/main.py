@@ -1611,11 +1611,15 @@ def register_tools():
         space_after_pt: float = None,
         line_spacing: float = None,
         line_spacing_rule: str = None,
+        keep_with_next: bool = None,
+        keep_together: bool = None,
+        alignment: str = None,
     ):
-        """[Windows only] Set paragraph spacing (before/after/line) in a Word document open in Word. Paragraphs are 1-indexed. Requires Word running."""
+        """[Windows only] Set paragraph spacing and layout properties in a Word document open in Word. Paragraphs are 1-indexed. Requires Word running."""
         return live_layout_tools.word_live_set_paragraph_spacing(
             filename, paragraph_index, start_paragraph, end_paragraph,
             space_before_pt, space_after_pt, line_spacing, line_spacing_rule,
+            keep_with_next, keep_together, alignment,
         )
 
     @mcp.tool(
